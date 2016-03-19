@@ -9,7 +9,8 @@ var exerciseSchema = new mongoose.Schema({
   exerciseName: {type: String, required: true, unique: true},
   personalRecordWeight: {type: Number},
   personalRecordReps: {type: Number},
-  timesDone: {type: Number, required: true}
+  timesDone: {type: Number, required: true},
+  dateStarted : {type: Date, required: true}
 });
 
 var weekday = new mongoose.Schema({

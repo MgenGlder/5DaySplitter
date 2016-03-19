@@ -9,6 +9,7 @@
     rl.on("SIGNINT", function () {
       process.emit("SIGINT");
     });
+  }
     var dbURI = "mongodb://localhost/Loc8r";
   //If this is run on the server, use the live database.
   //NODE_ENV is production, MONGOLAB_URI is the url to access database
@@ -53,5 +54,5 @@
       process.exit(0);
     });
   });
-  }
+
   require("./user.js");
