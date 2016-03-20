@@ -9,6 +9,7 @@ var router = express.Router();
 var ctrlUser = require("../controllers/user.js");
 
 
-router.get("/workouts", ctrlUser.createUser);
+router.post("/user", ctrlUser.createUser);
+router.get("/user/:username", ctrlUser.getUser);
 
 module.exports = router;
