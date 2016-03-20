@@ -5,9 +5,7 @@ var sendJsonResponse = function (res, status, content){
   res.status(status);
   res.json(content);
 };
-
-function createUser(req, res) {
-  console.log(req.body.username);
+function createUser(req, res){
   Users.create({
     username: req.body.username,
     name: req.body.name,
@@ -23,7 +21,6 @@ function createUser(req, res) {
 }
 
 function getUser (req, res) {
-  console.log(req.params.username)
   Users.find({
     username: req.params.username
   }).exec(function (err, user) {

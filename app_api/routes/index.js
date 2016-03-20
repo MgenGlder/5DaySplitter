@@ -7,9 +7,14 @@ var router = express.Router();
 // });
 
 var ctrlUser = require("../controllers/user.js");
+var ctrlExercise = require("../controllers/exercise.js");
 
 
 router.post("/user", ctrlUser.createUser);
 router.get("/user/:username", ctrlUser.getUser);
+router.post("/exercise/:name", ctrlExercise.createExercise);
+router.get("/exercise/:name", ctrlExercise.getExercise);
+router.post("/exercise/week/:username/:exerciseName", ctrlExercise.addWeekToUser);
+
 
 module.exports = router;
