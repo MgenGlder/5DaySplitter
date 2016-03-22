@@ -39,7 +39,10 @@ var getExercise = function (req, res) {
 
 var createWorkoutWeek = function (req, res) {
   var weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-
+  new Weekday({"day": "Tuesday"}).save(function (err, notErr) {
+    console.log("created weekday");
+    console.log(err,notErr)
+  });
   var targetUser;
   var count = 0;
   var countOuter = 0;
@@ -49,10 +52,12 @@ var createWorkoutWeek = function (req, res) {
     console.log(exerciseArray);
     var tempWorkouts = [];
     var exerciseArray = req.body[day];
+    var newWeekday = new Weekday({"day": day});
+    var exercisePromises = [];
     for (exercise of exerciseArray) {
 
       console.log(exercise);
-      Exercise
+      exercisePromises.push(Exercise
       .find({name: exercise})
       .exec(function (err, foundExercise) {
         if (err) {
@@ -60,28 +65,33 @@ var createWorkoutWeek = function (req, res) {
         }
         else {
           //dbUser.workoutWeek.$push({exercise: foundExercise});
-          console.log(foundExercise.name);
-          tempWorkouts.push(foundExercise.toObject);
-          console.log(tempWorkouts.length + " " + exerciseArray.length);
+          console.log(foundExercise[0])
+          newWeekday.exercises.push(foundExercise[0]);
+          //ITS A FUCKING ARRAY, USE THE FIND ONE METHOD FOR CHRIST SAKE.
         }
-      }).then(function () {
-        count++;
-        if (count == exerciseArray.length) {
-          console.log("in here...");
-          //console.log(tempWorkouts);
-          var newWeekday = new Weekday({"day": day, "exercise": tempWorkouts});
-          //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
-          newWeekday.save(function (err, saved) {
-            if (err) console.error(err);
-            else console.log("Weekday saved");
-          })
-          User.update({"username": req.params.username}, {$push: {"workoutWeek": newWeekday}}, {safe: true, upsert: true}, function (err, numAff) { console.log("updated the user" + err)});
-          count = 0;
-        }
-      });
+      }));
+
+      // .then(function () {
+      //   count++;
+      //   if (count == exerciseArray.length) {
+      //     console.log("in here...");
+      //     //console.log(tempWorkouts);
+      //     //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
+      //     newWeekday.save(function (err, saved) {
+      //       if (err) console.error(err);
+      //       else console.log("Weekday saved");
+      //     })
+      //     User.update({"username": req.params.username}, {$push: {"workoutWeek": newWeekday}}, {safe: true, upsert: true}, function (err, numAff) { console.log("updated the user" + err)});
+      //     count = 0;
+      //   }
+      // });
      //dbUser.workoutWeek.push({day: day, exercise: tempWorkouts});
      //LOOK INTO USING THE POPULATION API, REFERENCE THE SUBDOCUMENT INSTEAD OF CREATING IT AGAIN.
     }
+    Promise.all(exercisePromises).then(function(){
+      newWeekday.save();
+      User.findOneAndUpdate({"username": req.params.username}, {$push: {"workoutWeek": newWeekday}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user");});
+    });
 
     //console.log(`${day} workout was inserted...`)
   }
@@ -89,7 +99,7 @@ var createWorkoutWeek = function (req, res) {
   .find({username: req.params.username})
   .exec(function (err, dbUser) {
     sendJsonResponse(res, 200, dbUser);
-  })
+  });
   console.log(day + " workout was inserted...");
  };
 module.exports = {

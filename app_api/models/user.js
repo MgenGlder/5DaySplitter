@@ -6,7 +6,7 @@ var archivedExerciseSchema = new mongoose.Schema ({
 });
 
 var exerciseSchema = new mongoose.Schema({
-  name: {type: String, required: true, unique: true},
+  name: {type: String, required: true},
   personalRecordWeight: {type: Number},
   personalRecordReps: {type: Number},
   timesDone: {type: Number, required: true},
@@ -15,13 +15,13 @@ var exerciseSchema = new mongoose.Schema({
 
 var weekday = new mongoose.Schema({
   day: {type: String, required: true},
-  exercise: [exerciseSchema]
+  exercises: [{type: mongoose.Schema.ObjectId, ref: "exercise"}]
 });
 
 var userSchema = new mongoose.Schema({
   username: {type: String, required: true, unique: true},
   name: {type: String, required: true},
-  workoutWeek: [weekday],
+  workoutWeek: [{type: mongoose.Schema.ObjectId, ref: "weekday"}],
   exerciseHistory: [archivedExerciseSchema]
 });
 
