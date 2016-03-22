@@ -10,7 +10,8 @@
       process.emit("SIGINT");
     });
   }
-    var dbURI = "mongodb://localhost/Loc8r";
+    //Add new db as to not conflict with Loc8r app
+    var dbURI = "mongodb://localhost/5DaySplitter";
   //If this is run on the server, use the live database.
   //NODE_ENV is production, MONGOLAB_URI is the url to access database
   if (process.env.NODE_ENV === "production") {
