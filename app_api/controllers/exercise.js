@@ -3,7 +3,6 @@ var Exercise = mongoose.model("exercise");
 var Weekday = mongoose.model("weekday");
 var User = mongoose.model("user");
 var deepcopy = require("deepcopy");
-
 var sendJsonResponse = function (res, status, content) {
     res.status(status);
     res.json(content);
@@ -41,9 +40,9 @@ var getExercise = function (req, res) {
 //Works, exercises are retrieved from the database asynchronously and returned through promises that are ordered.
 
 var createWorkoutWeek = function (req, res) {
+    	
     var weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    var targetUser;
-    var arrayOfPromises = [];
+    var ExercisesArrayPerDay = {};
     var exercisePromises;
     var exerciseCount;
     var startFresh;
@@ -53,9 +52,9 @@ var createWorkoutWeek = function (req, res) {
         var exerciseArray = req.body[day];
         console.log(exerciseArray);
         exerciseCount = 0;
-
+        var exerciseDocArray = [];
         for (exercise of exerciseArray)
-                //if the promise has not been initialized, then initialize it starting at the first exercise.
+            //if the promise has not been initialized, then initialize it starting at the first exercise.
             if (startFresh){
                 if(!exercisePromises){
                     exercisePromises = Exercise.find({name: exerciseArray[0]}).exec().then(function(doc) {
@@ -63,21 +62,16 @@ var createWorkoutWeek = function (req, res) {
                         console.log("this is the exercise array");
                         console.log(this.exerciseArray);
                         console.log("And the day is " + this.day);
-                        return(Exercise.find({name: "Crunches"}).exec());
-                    }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day}));
+                        this.exerciseDocArray.push(doc[0]);
+                        console.log("Here1");
+                        console.log(this.exerciseDocArray);
+                        if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
+                            console.log("IN HERE!!!");
+                            this.ExercisesArrayPerDay[day] = deepcopy(this.exerciseDocArray);
+                        }
+                        return Exercise.find({name: this.exerciseArray[this.count]}).exec();          
+                    }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: deepcopy(exerciseDocArray), ExercisesArrayPerDay: ExercisesArrayPerDay}));
                     exerciseCount ++;
-                    startFresh = false;
-                }
-                else {
-                    exercisePromises.then(function (doc) {
-                        console.log("This is an exercise the count " + this.count);
-                        console.log("this is the exercise array");
-                        console.log(this.exerciseArray);
-                        console.log("And the day is " + this.day);
-                        return(Exercise.find({name: "Crunches"}).exec());
- 
-                    }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day}));
-                    exerciseCount++;
                     startFresh = false;
                 }
             }
@@ -87,12 +81,29 @@ var createWorkoutWeek = function (req, res) {
                     console.log("this is the exercise array");
                     console.log(this.exerciseArray);
                     console.log("And the day is " + this.day);
-                    return(Exercise.find({name: "Crunches"}).exec());
- 
-                }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day}));
+                    this.exerciseDocArray.push(doc[0]);
+                    console.log("Here3");
+                    console.log(this.exerciseDocArray);
+                    console.log(this.count + " " + this.exerciseArray.length);
+                    if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
+                        console.log("IN HERE!!!");
+                        this.ExercisesArrayPerDay[day] = deepcopy(this.exerciseDocArray);
+                    }
+                    return Exercise.find({name: this.exerciseArray[this.count]}).exec();
+                }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: exerciseDocArray, ExercisesArrayPerDay: ExercisesArrayPerDay}));
                 exerciseCount++;
-            }
 
+                if(day === weekdays[6] && exerciseCount === exerciseArray.length){
+                    // exercisePromise.then(function () {
+                    //     var dayCount = 0;
+                    //     for (day in weekdays){
+                            
+                    //     }
+                    // })
+                    exercisePromises.then(function() {console.log(this.ExercisesArrayPerDay); sendJsonResponse(res, 201, {message: "Weekday exercises saved."});}.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
+                    
+                }
+            }
     }
     // exercisePromises.push(Exercise
     // .find({name: exercise})
