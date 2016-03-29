@@ -101,10 +101,30 @@ var createWorkoutWeek = function (req, res) {
 
                     //     }
                     // })
-                    exercisePromises.then(function() {console.log(ExercisesArrayPerDay); sendJsonResponse(res, 201, {message: "Weekday exercises saved.", objectCreated: ExercisesArrayPerDay});}.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
+                    exercisePromises.then(function() {
+                        //adds new weekday objects to the database
+                        var weekdayDocumentArray = [];
+                        var weekdayFinalProduct = [];
+                        console.log("made it here at least");
+                        for (dayz in ExercisesArrayPerDay){
+                            var weekday = new Weekday({day: dayz});
+                            console.log(this.ExercisesArrayPerDay[dayz])
+                            weekday.exercises= this.ExercisesArrayPerDay[dayz];
+                            weekdayDocumentArray.push(weekday);
+                        }
+                        var weekdayPromiseArray = weekdayDocumentArray.map(function(weekday){
+                            //TODO need to tweek this line to work with the fact hat the 'weekday.save' happens after due to the fact that the promise needs to be returned. Try creating another map to push all the elements afterwardS??? 
+                            //User.findOneAndUpdate({"username": req.params.username}, {$push: {"workoutWeek": weekday}}, {upsert: true}, function (err, numAff) { console.log("updated the user")});
+                            return weekday.save();
+                        })
+                        Promise.all(weekdayPromiseArray).then(function(){console.log("itworked!")})
+                        console.log(ExercisesArrayPerDay);
+                        sendJsonResponse(res, 201, {message: "Weekday exercises saved.", objectCreated: ExercisesArrayPerDay});
+                    }.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
                 }
             }
     }
+    //const, let, var
     // exercisePromises.push(Exercise
     // .find({name: exercise})
     // .exec(function (err, foundExercise) {
