@@ -40,7 +40,7 @@ var getExercise = function (req, res) {
 //Works, exercises are retrieved from the database asynchronously and returned through promises that are ordered.
 
 var createWorkoutWeek = function (req, res) {
-    	
+
     var weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     var ExercisesArrayPerDay = {};
     var exercisePromises;
@@ -55,6 +55,7 @@ var createWorkoutWeek = function (req, res) {
         var exerciseDocArray = [];
         for (exercise of exerciseArray)
             //if the promise has not been initialized, then initialize it starting at the first exercise.
+            //miguel's idea for reduce is an interesting idea for applying an array of functions to a promise
             if (startFresh){
                 if(!exercisePromises){
                     exercisePromises = Exercise.find({name: exerciseArray[0]}).exec().then(function(doc) {
@@ -67,9 +68,9 @@ var createWorkoutWeek = function (req, res) {
                         console.log(this.exerciseDocArray);
                         if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
                             console.log("IN HERE!!!");
-                            this.ExercisesArrayPerDay[day] = deepcopy(this.exerciseDocArray);
+                            this.ExercisesArrayPerDay[this.day] = deepcopy(this.exerciseDocArray);
                         }
-                        return Exercise.find({name: this.exerciseArray[this.count]}).exec();          
+                        return Exercise.find({name: this.exerciseArray[this.count]}).exec();
                     }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: deepcopy(exerciseDocArray), ExercisesArrayPerDay: ExercisesArrayPerDay}));
                     exerciseCount ++;
                     startFresh = false;
@@ -87,7 +88,7 @@ var createWorkoutWeek = function (req, res) {
                     console.log(this.count + " " + this.exerciseArray.length);
                     if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
                         console.log("IN HERE!!!");
-                        this.ExercisesArrayPerDay[day] = deepcopy(this.exerciseDocArray);
+                        this.ExercisesArrayPerDay[this.day] = deepcopy(this.exerciseDocArray);
                     }
                     return Exercise.find({name: this.exerciseArray[this.count]}).exec();
                 }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: exerciseDocArray, ExercisesArrayPerDay: ExercisesArrayPerDay}));
@@ -97,11 +98,10 @@ var createWorkoutWeek = function (req, res) {
                     // exercisePromise.then(function () {
                     //     var dayCount = 0;
                     //     for (day in weekdays){
-                            
+
                     //     }
                     // })
-                    exercisePromises.then(function() {console.log(this.ExercisesArrayPerDay); sendJsonResponse(res, 201, {message: "Weekday exercises saved."});}.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
-                    
+                    exercisePromises.then(function() {console.log(ExercisesArrayPerDay); sendJsonResponse(res, 201, {message: "Weekday exercises saved.", objectCreated: ExercisesArrayPerDay});}.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
                 }
             }
     }
