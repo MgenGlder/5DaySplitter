@@ -7,7 +7,6 @@ var sendJsonResponse = function (res, status, content) {
     res.status(status);
     res.json(content);
 };
-
 var createExercise = function (req, res) {
     Exercise.create({
         name: req.params.name,
@@ -23,7 +22,6 @@ var createExercise = function (req, res) {
         }
     });
 };
-
 var getExercise = function (req, res) {
     Exercise
         .find({ name: req.params.name })
@@ -39,8 +37,20 @@ var getExercise = function (req, res) {
 
 //Works, exercises are retrieved from the database asynchronously and returned through promises that are ordered.
 
-var createWorkoutWeek = function (req, res) {
+var getWeek = function(req, res) {
+    User.find({username: req.params.username}).populate('workoutWeek').exec(function(err, doc) {
+        if (err) sendJsonResponse(res, 200, err);
+        else {
+            
+            sendJsonResponse(res, 200, doc[0].workoutWeek);
+        }
+    })
+}
 
+//Username MUST exist
+//Exercise MUST exist
+var createWorkoutWeek = function (req, res) {
+    
     var weekdays = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     var ExercisesArrayPerDay = {};
     var exercisePromises;
@@ -48,9 +58,7 @@ var createWorkoutWeek = function (req, res) {
     var startFresh;
     startFresh = true;
     for (day of weekdays) {
-        console.log(day);
         var exerciseArray = req.body[day];
-        console.log(exerciseArray);
         exerciseCount = 0;
         var exerciseDocArray = [];
         for (exercise of exerciseArray)
@@ -59,15 +67,8 @@ var createWorkoutWeek = function (req, res) {
             if (startFresh){
                 if(!exercisePromises){
                     exercisePromises = Exercise.find({name: exerciseArray[0]}).exec().then(function(doc) {
-                        console.log("This is an exercise the count " + this.count);
-                        console.log("this is the exercise array");
-                        console.log(this.exerciseArray);
-                        console.log("And the day is " + this.day);
                         this.exerciseDocArray.push(doc[0]);
-                        console.log("Here1");
-                        console.log(this.exerciseDocArray);
                         if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
-                            console.log("IN HERE!!!");
                             this.ExercisesArrayPerDay[this.day] = deepcopy(this.exerciseDocArray);
                         }
                         return Exercise.find({name: this.exerciseArray[this.count]}).exec();
@@ -78,94 +79,42 @@ var createWorkoutWeek = function (req, res) {
             }
             else {
                 exercisePromises.then(function (doc) {
-                    console.log("This is an exercise the count " + this.count);
-                    console.log("this is the exercise array");
-                    console.log(this.exerciseArray);
-                    console.log("And the day is " + this.day);
                     this.exerciseDocArray.push(doc[0]);
-                    console.log("Here3");
-                    console.log(this.exerciseDocArray);
-                    console.log(this.count + " " + this.exerciseArray.length);
                     if ((this.count == (this.exerciseArray.length - 1)) || (this.count == 0 && this.exerciseArray.length == 0)){
-                        console.log("IN HERE!!!");
                         this.ExercisesArrayPerDay[this.day] = deepcopy(this.exerciseDocArray);
                     }
                     return Exercise.find({name: this.exerciseArray[this.count]}).exec();
-                }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: exerciseDocArray, ExercisesArrayPerDay: ExercisesArrayPerDay}));
+                }.bind({count: exerciseCount, exerciseArray: deepcopy(exerciseArray), day: day, exerciseDocArray: exerciseDocArray, ExercisesArrayPerDay: ExercisesArrayPerDay})).catch(function(e){console.log("Errored out here3 because... " + e)});
                 exerciseCount++;
 
                 if(day === weekdays[6] && exerciseCount === exerciseArray.length){
-                    // exercisePromise.then(function () {
-                    //     var dayCount = 0;
-                    //     for (day in weekdays){
-
-                    //     }
-                    // })
                     exercisePromises.then(function() {
-                        //adds new weekday objects to the database
                         var weekdayDocumentArray = [];
                         var weekdayFinalProduct = [];
-                        console.log("made it here at least");
                         for (dayz in ExercisesArrayPerDay){
                             var weekday = new Weekday({day: dayz});
-                            console.log(this.ExercisesArrayPerDay[dayz])
                             weekday.exercises= this.ExercisesArrayPerDay[dayz];
                             weekdayDocumentArray.push(weekday);
                         }
+                        //^can use javascript reduce to do this in a simpler way.
                         var weekdayPromiseArray = weekdayDocumentArray.map(function(weekday){
-                            //TODO need to tweek this line to work with the fact hat the 'weekday.save' happens after due to the fact that the promise needs to be returned. Try creating another map to push all the elements afterwardS??? 
-                            //User.findOneAndUpdate({"username": req.params.username}, {$push: {"workoutWeek": weekday}}, {upsert: true}, function (err, numAff) { console.log("updated the user")});
-                            return weekday.save();
-                        })
-                        Promise.all(weekdayPromiseArray).then(function(){console.log("itworked!")})
-                        console.log(ExercisesArrayPerDay);
+                                return weekday.save(function(err) {
+                                    if(err) console.log("There was an error here... " + err);
+                                })
+                            }.bind({weekday: weekday}));
+                        Promise.all(weekdayPromiseArray).then(function(values){
+                            User.update({"username": req.params.username}, { "workoutWeek":values}, { upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
+                        }.bind({weekdayPromiseArray: weekdayPromiseArray}))
+                        .catch(e=>{console.log("errored out here2 because " + e)});
                         sendJsonResponse(res, 201, {message: "Weekday exercises saved.", objectCreated: ExercisesArrayPerDay});
-                    }.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}));
+                    }.bind({ExercisesArrayPerDay: ExercisesArrayPerDay}))
+                    .catch(e=>{console.log("something went wrong8 "); console.log(e)});
+                    
                 }
             }
-    }
-    //const, let, var
-    // exercisePromises.push(Exercise
-    // .find({name: exercise})
-    // .exec(function (err, foundExercise) {
-    //   if (err) {
-    //     sendJsonResponse(res, 400, err);
-    //   }
-    //   else {
-    //     //dbUser.workoutWeek.$push({exercise: foundExercise});
-    //     console.log("Found the exercise...");
-    //     console.log(foundExercise[0])
-    //     newWeekday.exercises.push(foundExercise[0]);
-    //     //ITS A FUCKING ARRAY, USE THE FIND ONE METHOD FOR CHRIST SAKE.
-    //   }
-    // }.bind(this)));
-
-    // .then(function () {
-    //   count++;
-    //   if (count == exerciseArray.length) {
-    //     console.log("in here...");
-    //     //console.log(tempWorkouts);
+        }
+   }
     //     //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
-    //     newWeekday.save(function (err, saved) {
-    //       if (err) console.error(err);
-    //       else console.log("Weekday saved");
-    //     })
-    //     User.update({"username": req.params.username}, {$push: {"workoutWeek": newWeekday}}, {safe: true, upsert: true}, function (err, numAff) { console.log("updated the user" + err)});
-    //     count = 0;
-    //   }
-    // });
-    //dbUser.workoutWeek.push({day: day, exercise: tempWorkouts});
-    //LOOK INTO USING THE POPULATION API, REFERENCE THE SUBDOCUMENT INSTEAD OF CREATING IT AGAIN.
-
-    //   arrayOfPromises.push(Promise.all(exercisePromises).then(function(){
-    //     arrayOfPromises.push(newWeekday.save());
-    //     arrayOfPromises.push(User.findOneAndUpdate({"username": req.params.username}, {$push: {"workoutWeek": newWeekday}}, {upsert: true}, function (err, numAff) { console.log("updated the user");
-    //     exercisePromises = [];
-    //   console.log(numAff);}));
-    // }.bind(this)));
-    //
-    //   //console.log(`${day} workout was inserted...`)
-    // }
     // Promise.all(arrayOfPromises).then(
     //   User
     //     .find({username: req.params.username})
@@ -175,9 +124,8 @@ var createWorkoutWeek = function (req, res) {
     //       console.log(day + " workout was inserted...");
     //     })
     // );
-
-};
 module.exports = {
+    getWeek: getWeek,
     createExercise: createExercise,
     getExercise: getExercise,
     createWorkoutWeek: createWorkoutWeek
