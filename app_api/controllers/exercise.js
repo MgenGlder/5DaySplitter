@@ -37,8 +37,8 @@ var getExercise = function (req, res) {
 
 //Works, exercises are retrieved from the database asynchronously and returned through promises that are ordered.
 
-var getWeek = function(req, res) {
-    User.find({username: req.params.username}).populate('workoutWeek').exec(function(err, doc) {
+var getWorkoutWeek = function(req, res) {
+    User.find({username: req.params.username}).populate({path: 'workoutWeek', populate: {path: "exercises", model: Exercise}}).exec(function(err, doc) { //if using a different model than the base model in the nested populate call, must specifiy "model" attribute.
         if (err) sendJsonResponse(res, 200, err);
         else {
             
@@ -115,17 +115,8 @@ var createWorkoutWeek = function (req, res) {
         }
    }
     //     //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
-    // Promise.all(arrayOfPromises).then(
-    //   User
-    //     .find({username: req.params.username})
-    //     .populate("workoutWeek")
-    //     .exec(function (err, dbUser) {
-    //       sendJsonResponse(res, 200, dbUser);
-    //       console.log(day + " workout was inserted...");
-    //     })
-    // );
 module.exports = {
-    getWeek: getWeek,
+    getWorkoutWeek: getWorkoutWeek,
     createExercise: createExercise,
     getExercise: getExercise,
     createWorkoutWeek: createWorkoutWeek
