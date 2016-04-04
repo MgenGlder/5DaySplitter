@@ -35,6 +35,24 @@ var getExercise = function (req, res) {
         });
 };
 
+addArchivedExercise = function (req, res) {
+    //TODO
+}
+
+var editExercise = function (req, res) {
+    console.log(req.params.name);
+    Exercise
+        .find({name: req.body.name })
+        .exec(function (err, exercise) {
+            if(exercise){
+                exercise.name = req.body.name;
+                exercise[0].timesDone = req.body.timesDone;
+                exercise[0].save().then(() => {sendJsonResponse(res, 200, {'message': 'Exercise updated'}); console.log("Exercise updated")})
+            }
+            
+        })
+}
+
 //Works, exercises are retrieved from the database asynchronously and returned through promises that are ordered.
 
 var getWorkoutWeek = function(req, res) {
@@ -116,6 +134,7 @@ var createWorkoutWeek = function (req, res) {
    }
     //     //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
 module.exports = {
+    editExercise: editExercise,
     getWorkoutWeek: getWorkoutWeek,
     createExercise: createExercise,
     getExercise: getExercise,

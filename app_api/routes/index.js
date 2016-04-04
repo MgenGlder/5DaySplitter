@@ -14,6 +14,7 @@ router.post("/user", ctrlUser.createUser);
 router.get("/user/:username", ctrlUser.getUser);
 router.post("/exercise/:name", ctrlExercise.createExercise);
 router.get("/exercise/:name", ctrlExercise.getExercise);
+router.post("/exercise/:name/edit", ctrlExercise.editExercise);
 router.post("/exercise/week/:username", ctrlExercise.createWorkoutWeek);
 router.get("/workoutweek/:username", ctrlExercise.getWorkoutWeek);
 
