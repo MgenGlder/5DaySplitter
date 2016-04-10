@@ -8,6 +8,7 @@ var sendJsonResponse = function (res, status, content) {
     res.status(status);
     res.json(content);
 };
+
 var createExercise = function (req, res) {
     Exercise.create({
         name: req.params.name,
@@ -67,12 +68,19 @@ var addArchivedExercise = function (req, res) {
 var editExercise = function (req, res) {
     console.log(req.params.name);
     Exercise
-        .find({name: req.body.name })
+        .find({name: req.params.name })
         .exec(function (err, exercise) {
-            if(exercise){
-                exercise.name = req.body.name;
+            if(err){
+                sendJsonResponse(res, 400, {"message": "There was an error retrieving exercise from the database"})
+                console.log(err);
+            }
+            if(exercise[0]){
+                exercise[0].name = req.body.name;
                 exercise[0].timesDone = req.body.timesDone;
-                exercise[0].save().then(() => {sendJsonResponse(res, 200, {'message': 'Exercise updated'}); console.log("Exercise updated")})
+                exercise[0].save().then((doc) => {sendJsonResponse(res, 200, {'message': 'Exercise updated', "updatedDoc": doc}); console.log("Exercise updated")})
+            }
+            else {
+                sendJsonResponse(res, 400, {"message": "Exercise could not be found in the database"})
             }
             
         })
@@ -102,6 +110,10 @@ var createWorkoutWeek = function (req, res) {
     startFresh = true;
     for (day of weekdays) {
         var exerciseArray = req.body[day];
+        if (!exerciseArray) {
+            sendJsonResponse(res, 400, {"message": "Not all weekdays are present in request"});
+            return;
+        }
         exerciseCount = 0;
         var exerciseDocArray = [];
         for (exercise of exerciseArray)

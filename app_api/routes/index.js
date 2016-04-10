@@ -12,11 +12,12 @@ var ctrlExercise = require("../controllers/exercise.js");
 
 router.post("/user", ctrlUser.createUser);
 router.get("/user/:username", ctrlUser.getUser);
+router.get("/user/:username/name", ctrlUser.getName);
 router.post("/exercise/:name", ctrlExercise.createExercise);
 router.get("/exercise/:name", ctrlExercise.getExercise);
 router.post("/exercise/:name/edit", ctrlExercise.editExercise);
 router.post("/exercise/:name/archive", ctrlExercise.addArchivedExercise);
-router.post("/exercise/week/:username", ctrlExercise.createWorkoutWeek);
+router.post("/workoutWeek/:username", ctrlExercise.createWorkoutWeek);
 router.get("/workoutweek/:username", ctrlExercise.getWorkoutWeek);
 
 

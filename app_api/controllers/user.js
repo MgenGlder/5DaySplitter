@@ -5,6 +5,20 @@ var sendJsonResponse = function (res, status, content){
   res.status(status);
   res.json(content);
 };
+
+var getName = function (req, res) {
+    Users
+        .find({username: req.params.username})
+        .exec((err, doc)=> {
+            if (err) {
+                sendJsonResponse(res, 400, {"message": "There was an error finding the user"});
+                console.log(err);
+            }
+            else if(doc[0]) {
+                sendJsonResponse(res, 200, {"name": doc[0].name});   
+            }
+        })
+}
 function createUser(req, res){
   Users.create({
     username: req.body.username,
@@ -34,4 +48,5 @@ function getUser (req, res) {
 }
 
 module.exports = {createUser: createUser,
-getUser: getUser};
+getUser: getUser,
+getName: getName};
