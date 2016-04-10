@@ -37,16 +37,27 @@ var getExercise = function (req, res) {
 };
 
 var addArchivedExercise = function (req, res) {
+    //create new ArchivedExercise object. 
     var archive = new ArchiveExercise({exerciseName: req.body.exerciseName, date: Date.now()})
-    archive.save((err, doc) => {
+    archive.save((err) => {
         if (err) sendJsonResponse(res, 400, {"message": "something went wrong..."})
         else {
-            User.find({username: req.params.name}).exec((userDoc)=>{
-                if (doc) {
-                    userDoc.archivedExercises.push(archive);
-                    userDoc.save(()=>{sendJsonResponse(res, 200, {"message": "Archived exercise added to the user"})});
+            User.find({username: req.params.name}).exec(function (err, userDoc){
+                if (err) sendJsonResponse(res, 400, err);
+                else if (userDoc[0]) {
+                    userDoc[0].exerciseHistory.push(archive);
+                    userDoc[0].save((err)=>{
+                        if(err){ 
+                            sendJsonResponse(res, 200, {"message": "Error saving to user..."}); 
+                            console.log(err);
+                        }
+                        else { 
+                            sendJsonResponse(res, 200, {"message": "Archived exercise added to the user"})
+                        }
+                    });
                 }
-            })
+                else sendJsonResponse(res, 400, {"message": "Username was not found in the database"});
+            }.bind({archive: archive}))
         }
     })
 }
