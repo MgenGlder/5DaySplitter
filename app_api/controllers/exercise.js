@@ -2,6 +2,7 @@ var mongoose = require("mongoose");
 var Exercise = mongoose.model("exercise");
 var Weekday = mongoose.model("weekday");
 var User = mongoose.model("user");
+var ArchiveExercise = mongoose.model("archivedExercise");
 var deepcopy = require("deepcopy");
 var sendJsonResponse = function (res, status, content) {
     res.status(status);
@@ -35,8 +36,19 @@ var getExercise = function (req, res) {
         });
 };
 
-addArchivedExercise = function (req, res) {
-    //TODO
+var addArchivedExercise = function (req, res) {
+    var archive = new ArchiveExercise({exerciseName: req.body.exerciseName, date: Date.now()})
+    archive.save((err, doc) => {
+        if (err) sendJsonResponse(res, 400, {"message": "something went wrong..."})
+        else {
+            User.find({username: req.params.name}).exec((userDoc)=>{
+                if (doc) {
+                    userDoc.archivedExercises.push(archive);
+                    userDoc.save(()=>{sendJsonResponse(res, 200, {"message": "Archived exercise added to the user"})});
+                }
+            })
+        }
+    })
 }
 
 var editExercise = function (req, res) {
@@ -108,7 +120,6 @@ var createWorkoutWeek = function (req, res) {
                 if(day === weekdays[6] && exerciseCount === exerciseArray.length){
                     exercisePromises.then(function() {
                         var weekdayDocumentArray = [];
-                        var weekdayFinalProduct = [];
                         for (dayz in ExercisesArrayPerDay){
                             var weekday = new Weekday({day: dayz});
                             weekday.exercises= this.ExercisesArrayPerDay[dayz];
@@ -134,6 +145,7 @@ var createWorkoutWeek = function (req, res) {
    }
     //     //User.update({"username": req.params.username}, {$push: {"workoutWeek":{$each: tempWorkouts}}}, {safe: true, upsert: true, new: true}, function (err, numAff) { console.log("updated the user" + err)});
 module.exports = {
+    addArchivedExercise: addArchivedExercise,
     editExercise: editExercise,
     getWorkoutWeek: getWorkoutWeek,
     createExercise: createExercise,
