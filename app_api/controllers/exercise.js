@@ -39,7 +39,9 @@ var getExercise = function (req, res) {
 var addArchivedExercise = function (req, res) {
     //create new ArchivedExercise object. 
     var archive = new ArchiveExercise({exerciseName: req.body.exerciseName, date: Date.now()})
+    //save the current date/time and the name of the exercise  that was given. vvv
     archive.save((err) => {
+        //when done with save, find the user by username in url and save the archived exercise to the user. 
         if (err) sendJsonResponse(res, 400, {"message": "something went wrong..."})
         else {
             User.find({username: req.params.name}).exec(function (err, userDoc){
